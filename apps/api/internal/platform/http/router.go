@@ -43,5 +43,5 @@ func NewRouter(deps Dependencies) http.Handler {
 		return deps.Config.DevUserID
 	}).Register(mux)
 
-	return requestLogger(deps.Logger, mux)
+	return requestLogger(deps.Logger, corsMiddleware(deps.Config, mux))
 }

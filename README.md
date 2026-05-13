@@ -10,6 +10,22 @@ Start PostgreSQL, Redis, and MinIO:
 docker compose up -d postgres redis minio
 ```
 
+## Web App
+
+Install frontend dependencies:
+
+```sh
+pnpm install
+```
+
+Run the Moodora PWA:
+
+```sh
+pnpm --filter web dev
+```
+
+The web app lives in `apps/web` and uses `NEXT_PUBLIC_API_BASE_URL` from `apps/web/.env.local`.
+
 ## Backend Migrations
 
 The Go backend stores PostgreSQL migrations in `apps/api/migrations`.
@@ -111,6 +127,7 @@ APP_ENV=local \
 APP_PORT=8080 \
 APP_TIMEZONE=Asia/Bangkok \
 DEV_USER_ID=00000000-0000-0000-0000-000000000001 \
+CORS_ALLOWED_ORIGINS="http://localhost:3000,http://127.0.0.1:3000" \
 DATABASE_URL="postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
 REDIS_URL="redis://localhost:6379" \
 S3_ENDPOINT="http://localhost:9000" \
@@ -119,6 +136,8 @@ S3_ACCESS_KEY="moodora" \
 S3_SECRET_KEY="moodora123" \
 go run ./cmd/api
 ```
+
+For local web development, `CORS_ALLOWED_ORIGINS` must include the Next.js dev origin. The default API config already allows `http://localhost:3000` and `http://127.0.0.1:3000` when the variable is unset.
 
 ## API Smoke Tests
 

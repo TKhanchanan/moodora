@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Config struct {
 	RedisURL    string
 	Storage     StorageConfig
 	DevUserID   string
+	CORS        CORSConfig
 }
 
 type StorageConfig struct {
@@ -30,6 +32,10 @@ type StorageConfig struct {
 	SecretKey     string
 	PublicBaseURL string
 	UseSSL        bool
+}
+
+type CORSConfig struct {
+	AllowedOrigins []string
 }
 
 func Load() (Config, error) {
@@ -52,6 +58,9 @@ func Load() (Config, error) {
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		RedisURL:    os.Getenv("REDIS_URL"),
 		DevUserID:   os.Getenv("DEV_USER_ID"),
+		CORS: CORSConfig{
+			AllowedOrigins: splitCSV(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")),
+		},
 		Storage: StorageConfig{
 			Endpoint:      getEnv("S3_ENDPOINT", "http://localhost:9000"),
 			Region:        getEnv("S3_REGION", "auto"),
@@ -108,4 +117,16 @@ func getEnv(key string, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	values := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			values = append(values, part)
+		}
+	}
+	return values
 }

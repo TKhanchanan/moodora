@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="Moodora">
+  <rect width="192" height="192" rx="42" fill="#F8F4FA"/>
+  <circle cx="96" cy="96" r="58" fill="#D9C7FF"/>
+  <path d="M122 44c-18 8-31 27-31 49s13 41 31 49c-7 4-16 6-26 6-29 0-52-23-52-52s23-52 52-52c10 0 19 2 26 6Z" fill="#FFF8E7"/>
+  <circle cx="131" cy="68" r="6" fill="#FFD8C7"/>
+  <circle cx="135" cy="124" r="4" fill="#C9F2E3"/>
+</svg>
