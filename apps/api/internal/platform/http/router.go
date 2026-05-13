@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/moodora/moodora/apps/api/internal/modules/checkin"
+	"github.com/moodora/moodora/apps/api/internal/modules/lifestyle"
 	"github.com/moodora/moodora/apps/api/internal/modules/tarot"
 	"github.com/moodora/moodora/apps/api/internal/modules/wallet"
 )
@@ -28,6 +29,11 @@ func NewRouter(deps Dependencies) http.Handler {
 	}
 	wallet.NewHandler(walletService, resolveDevUser).Register(mux)
 	checkin.NewHandler(checkin.NewService(deps.DB, walletService, deps.Config.AppTimezone), resolveDevUser).Register(mux)
+
+	lifestyleService := lifestyle.NewService(lifestyle.NewRepository(deps.DB), deps.Config.AppTimezone)
+	lifestyle.NewHandler(lifestyleService, func(r *http.Request) string {
+		return deps.Config.DevUserID
+	}).Register(mux)
 
 	return requestLogger(deps.Logger, mux)
 }

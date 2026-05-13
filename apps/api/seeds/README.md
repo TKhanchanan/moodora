@@ -36,4 +36,12 @@ psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
   -f apps/api/seeds/dev_user.sql
 ```
 
+Run Lucky Lifestyle seeds:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/lifestyle/001_lucky_lifestyle.sql
+```
+
 `apps/api/seeds/tarot/002_cards_template.sql` documents the future 78-card tarotapi.dev import shape but does not insert card data yet.

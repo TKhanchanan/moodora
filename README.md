@@ -83,6 +83,14 @@ psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
   -f apps/api/seeds/tarot/003_interpretations_sample.sql
 ```
 
+Run Lucky Lifestyle seeds:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/lifestyle/001_lucky_lifestyle.sql
+```
+
 The future 78-card tarotapi.dev seed structure is documented in `apps/api/seeds/tarot/002_cards_template.sql`. It does not fetch external data yet.
 
 ## Run API
@@ -139,3 +147,16 @@ curl http://localhost:8080/api/v1/coin-transactions
 ```
 
 Check-in rewards use Bangkok-local dates. The reward cycle is day 1: 5, day 2: 5, day 3: 8, day 4: 8, day 5: 10, day 6: 15, day 7: 25. After day 7, continued streak days keep the day 7 reward.
+
+Lucky Lifestyle endpoints:
+
+```sh
+curl http://localhost:8080/api/v1/lucky-colors/today
+curl http://localhost:8080/api/v1/lucky-colors/today?purpose=career
+curl http://localhost:8080/api/v1/lucky-foods/today
+curl http://localhost:8080/api/v1/lucky-items/today
+curl http://localhost:8080/api/v1/avoidance/today
+curl http://localhost:8080/api/v1/daily-insights/today
+```
+
+Daily insight snapshots are stored by local date and timezone so the same user/date response stays stable. Recommendations are lifestyle and self-reflection prompts, not guaranteed outcomes.

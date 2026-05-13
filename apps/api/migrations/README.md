@@ -65,3 +65,11 @@ Use this object key convention:
 tarot/{deck_code}/webp/{size}/{source_code}.webp
 tarot/{deck_code}/jpg/{size}/{source_code}.jpg
 ```
+
+Lucky Lifestyle reference data is seeded separately:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/lifestyle/001_lucky_lifestyle.sql
+```
