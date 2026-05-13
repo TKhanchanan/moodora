@@ -1,0 +1,22 @@
+{
+  "cards": [
+    {
+      "name_short": "ar01",
+      "name": "The Magician",
+      "type": "major",
+      "suit": "",
+      "meaning_up": "Focused intention, skill, and aligned action.",
+      "meaning_rev": "Scattered focus, hesitation, or unused potential.",
+      "desc": "A major arcana card used as an example of the tarotapi.dev-compatible import shape."
+    },
+    {
+      "name_short": "sw08",
+      "name": "Eight of Swords",
+      "type": "minor",
+      "suit": "swords",
+      "meaning_up": "Feeling limited, pausing to see what choices are still available.",
+      "meaning_rev": "A gradual release from limiting thoughts or old assumptions.",
+      "desc": "A minor arcana card used as an example of the tarotapi.dev-compatible import shape."
+    }
+  ]
+}

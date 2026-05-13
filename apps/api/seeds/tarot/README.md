@@ -26,6 +26,21 @@ The spread seed inserts or updates:
 
 Tarot card data from tarotapi.dev is intentionally not fetched by these seeds yet. `002_cards_template.sql` documents the future 78-card seed shape using `source_code` values such as `ar01` and `sw08`.
 
+Import the built-in 78-card source set:
+
+```sh
+cd apps/api
+go run ./cmd/import-tarot-cards
+```
+
+Seed sample Thai/English interpretations:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/tarot/003_interpretations_sample.sql
+```
+
 ## Card Asset Storage
 
 Tarot card image metadata belongs in `tarot_card_assets`. Actual image files should be stored in the configured S3-compatible object storage, such as MinIO for local development.

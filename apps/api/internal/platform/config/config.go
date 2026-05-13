@@ -19,6 +19,7 @@ type Config struct {
 	DatabaseURL string
 	RedisURL    string
 	Storage     StorageConfig
+	DevUserID   string
 }
 
 type StorageConfig struct {
@@ -50,6 +51,7 @@ func Load() (Config, error) {
 		AppTimezone: timezone,
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		RedisURL:    os.Getenv("REDIS_URL"),
+		DevUserID:   os.Getenv("DEV_USER_ID"),
 		Storage: StorageConfig{
 			Endpoint:      getEnv("S3_ENDPOINT", "http://localhost:9000"),
 			Region:        getEnv("S3_REGION", "auto"),
