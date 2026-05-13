@@ -18,7 +18,13 @@ psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
   -f apps/api/seeds/tarot/001_spreads.sql
 ```
 
-Tarot card data from tarotapi.dev is intentionally not fetched by these seeds yet. Add a separate import command later so source data can be validated, normalized, and reviewed before insertion.
+The spread seed inserts or updates:
+
+- `one_card` with one position: `general`
+- `three_cards` with three positions: `past`, `present`, `future`
+- `celtic_cross` with ten positions: `current_situation`, `challenge`, `subconscious`, `past_influence`, `conscious_goal`, `near_future`, `self`, `environment`, `hopes_fears`, `final_outcome`
+
+Tarot card data from tarotapi.dev is intentionally not fetched by these seeds yet. `002_cards_template.sql` documents the future 78-card seed shape using `source_code` values such as `ar01` and `sw08`.
 
 ## Card Asset Storage
 

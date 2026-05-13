@@ -52,6 +52,12 @@ psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
   -f apps/api/seeds/tarot/001_spreads.sql
 ```
 
+The future Tarot card seed structure is documented in:
+
+```text
+apps/api/seeds/tarot/002_cards_template.sql
+```
+
 Tarot card assets are stored as metadata in PostgreSQL and as files in object storage.
 Use this object key convention:
 

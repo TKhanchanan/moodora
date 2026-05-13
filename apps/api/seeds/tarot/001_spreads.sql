@@ -14,7 +14,7 @@ WITH one_card AS (
     RETURNING id
 )
 INSERT INTO tarot_spread_positions (spread_id, position_number, code, name, description)
-SELECT id, 1, 'message', 'Message', 'The main message or reflection for this reading.'
+SELECT id, 1, 'general', 'ภาพรวมของวันนี้', 'ภาพรวมของวันนี้'
 FROM one_card
 ON CONFLICT (spread_id, position_number) DO UPDATE
 SET code = EXCLUDED.code,
@@ -39,9 +39,9 @@ WITH three_cards AS (
 ),
 positions (position_number, code, name, description) AS (
     VALUES
-        (1, 'past', 'Past', 'A past influence or context for the question.'),
-        (2, 'present', 'Present', 'The current energy or situation.'),
-        (3, 'future', 'Future', 'A possible direction or next reflection point.')
+        (1, 'past', 'อดีต', 'อดีต'),
+        (2, 'present', 'ปัจจุบัน', 'ปัจจุบัน'),
+        (3, 'future', 'แนวโน้มอนาคต', 'แนวโน้มอนาคต')
 )
 INSERT INTO tarot_spread_positions (spread_id, position_number, code, name, description)
 SELECT three_cards.id, positions.position_number, positions.code, positions.name, positions.description
@@ -70,16 +70,16 @@ WITH celtic_cross AS (
 ),
 positions (position_number, code, name, description) AS (
     VALUES
-        (1, 'present', 'Present', 'The central situation or current energy.'),
-        (2, 'challenge', 'Challenge', 'The crossing influence or immediate challenge.'),
-        (3, 'foundation', 'Foundation', 'The root context beneath the situation.'),
-        (4, 'past', 'Past', 'Recent past influence.'),
-        (5, 'conscious', 'Conscious', 'What is visible, intended, or consciously held.'),
-        (6, 'near_future', 'Near Future', 'A likely near-term development.'),
-        (7, 'self', 'Self', 'The seeker''s current stance or self-view.'),
-        (8, 'environment', 'Environment', 'External influences or surrounding context.'),
-        (9, 'hopes_fears', 'Hopes and Fears', 'Inner hopes, worries, or expectations.'),
-        (10, 'outcome', 'Outcome', 'A possible outcome or integration point.')
+        (1, 'current_situation', 'สถานการณ์ปัจจุบัน', 'สถานการณ์ปัจจุบัน'),
+        (2, 'challenge', 'อุปสรรคหรือสิ่งที่ท้าทาย', 'อุปสรรคหรือสิ่งที่ท้าทาย'),
+        (3, 'subconscious', 'สิ่งที่อยู่ลึกในใจ', 'สิ่งที่อยู่ลึกในใจ'),
+        (4, 'past_influence', 'อิทธิพลจากอดีต', 'อิทธิพลจากอดีต'),
+        (5, 'conscious_goal', 'สิ่งที่คาดหวังหรือเป้าหมาย', 'สิ่งที่คาดหวังหรือเป้าหมาย'),
+        (6, 'near_future', 'อนาคตอันใกล้', 'อนาคตอันใกล้'),
+        (7, 'self', 'ตัวคุณในสถานการณ์นี้', 'ตัวคุณในสถานการณ์นี้'),
+        (8, 'environment', 'สภาพแวดล้อมหรือคนรอบตัว', 'สภาพแวดล้อมหรือคนรอบตัว'),
+        (9, 'hopes_fears', 'ความหวังและความกังวล', 'ความหวังและความกังวล'),
+        (10, 'final_outcome', 'แนวโน้มบทสรุป', 'แนวโน้มบทสรุป')
 )
 INSERT INTO tarot_spread_positions (spread_id, position_number, code, name, description)
 SELECT celtic_cross.id, positions.position_number, positions.code, positions.name, positions.description

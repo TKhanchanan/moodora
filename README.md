@@ -45,3 +45,15 @@ migrate -path apps/api/migrations \
 ```
 
 Future deployment should run the same migration files using the environment's secret-provided `DATABASE_URL`.
+
+## Backend Seeds
+
+Run Tarot reference seeds after migrations:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/tarot/001_spreads.sql
+```
+
+The future 78-card tarotapi.dev seed structure is documented in `apps/api/seeds/tarot/002_cards_template.sql`. It does not fetch external data yet.
