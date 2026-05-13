@@ -9,6 +9,7 @@ import (
 	"github.com/moodora/moodora/apps/api/internal/modules/moon"
 	"github.com/moodora/moodora/apps/api/internal/modules/tarot"
 	"github.com/moodora/moodora/apps/api/internal/modules/wallet"
+	"github.com/moodora/moodora/apps/api/internal/platform/openapi"
 )
 
 func NewRouter(deps Dependencies) http.Handler {
@@ -16,6 +17,7 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	mux.HandleFunc("GET /health", healthHandler(deps))
 	mux.HandleFunc("GET /api/v1/version", versionHandler(deps))
+	openapi.Register(mux)
 
 	tarotRepo := tarot.NewRepository(deps.DB)
 	tarotHandler := tarot.NewHandler(tarot.NewService(tarotRepo))

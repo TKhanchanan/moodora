@@ -60,3 +60,26 @@ tarot/rider_waite/jpg/large/sw08.jpg
 ```
 
 Do not commit generated or downloaded Tarot image files to the repository.
+
+## Asset Pipeline
+
+Place original card files in:
+
+```text
+local-assets/tarot/rider_waite/originals/{source_code}.{png,jpg,jpeg}
+```
+
+Run the backend command from `apps/api`:
+
+```sh
+DATABASE_URL="postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+S3_ENDPOINT="http://localhost:9000" \
+S3_REGION="auto" \
+S3_BUCKET="moodora-assets" \
+S3_ACCESS_KEY="moodora" \
+S3_SECRET_KEY="moodora123" \
+S3_PUBLIC_BASE_URL="http://localhost:9000/moodora-assets" \
+go run ./cmd/process-tarot-assets
+```
+
+The command generates WebP and JPG derivatives under `processed-assets/tarot/rider_waite/`, uploads them to S3-compatible storage, and upserts `tarot_card_assets`.

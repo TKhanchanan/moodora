@@ -129,6 +129,16 @@ curl http://localhost:8080/health
 curl http://localhost:8080/api/v1/version
 ```
 
+API documentation:
+
+```sh
+curl http://localhost:8080/api/v1/openapi.json
+open http://localhost:8080/docs
+open http://localhost:8080/swagger
+```
+
+`/docs` and `/swagger` serve Swagger UI for the embedded OpenAPI document. The UI loads Swagger UI assets from a CDN, while `/api/v1/openapi.json` is served directly by the Go API.
+
 Tarot read endpoints:
 
 ```sh
@@ -182,3 +192,50 @@ curl http://localhost:8080/api/v1/moon/reports/{id}
 ```
 
 Moon calculations use Moodora's internal deterministic `moon_phase_v1` method. NASA/APOD and NASA SVS are seeded as future astronomy sources only; the API does not call live NASA services yet.
+
+## Tarot Asset Pipeline
+
+Source Tarot images are local-only and must not be committed. Place Rider-Waite originals here:
+
+```text
+local-assets/tarot/rider_waite/originals/{source_code}.{png,jpg,jpeg}
+```
+
+Each `{source_code}` must match `tarot_cards.source_code`, such as `ar01` or `sw08`.
+
+Install the WebP encoder:
+
+```sh
+brew install webp
+```
+
+Run migrations, import Tarot cards, and make sure the S3-compatible bucket exists. Then process and upload assets:
+
+```sh
+cd apps/api
+DATABASE_URL="postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+S3_ENDPOINT="http://localhost:9000" \
+S3_REGION="auto" \
+S3_BUCKET="moodora-assets" \
+S3_ACCESS_KEY="moodora" \
+S3_SECRET_KEY="moodora123" \
+S3_PUBLIC_BASE_URL="http://localhost:9000/moodora-assets" \
+go run ./cmd/process-tarot-assets
+```
+
+Generated files are written locally under:
+
+```text
+processed-assets/tarot/rider_waite/
+```
+
+Uploaded object keys use:
+
+```text
+tarot/rider_waite/webp/thumb/{source_code}.webp
+tarot/rider_waite/webp/medium/{source_code}.webp
+tarot/rider_waite/webp/large/{source_code}.webp
+tarot/rider_waite/jpg/medium/{source_code}.jpg
+```
+
+The command upserts `tarot_card_assets` records and is safe to rerun. `local-assets/` and `processed-assets/` are gitignored.

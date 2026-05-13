@@ -1,0 +1,623 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Moodora API",
+    "version": "0.1.0",
+    "description": "Moodora backend API for Tarot, wallet/check-in, lucky lifestyle, moon reports, and system health. Fortune-style responses are lifestyle and self-reflection guidance, not guaranteed outcomes."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    { "name": "System" },
+    { "name": "Tarot" },
+    { "name": "Wallet" },
+    { "name": "Lucky Lifestyle" },
+    { "name": "Moon" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthResponse" } } }
+          },
+          "503": {
+            "description": "One or more dependencies are unavailable",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/version": {
+      "get": {
+        "tags": ["System"],
+        "summary": "API version",
+        "responses": {
+          "200": {
+            "description": "Version information",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VersionResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/openapi.json": {
+      "get": {
+        "tags": ["System"],
+        "summary": "OpenAPI JSON document",
+        "responses": {
+          "200": {
+            "description": "OpenAPI document",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/tarot/cards": {
+      "get": {
+        "tags": ["Tarot"],
+        "summary": "List Tarot cards",
+        "responses": {
+          "200": {
+            "description": "Tarot cards",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TarotCardsResponse" } } }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/tarot/cards/{sourceCode}": {
+      "get": {
+        "tags": ["Tarot"],
+        "summary": "Get Tarot card by source code",
+        "parameters": [
+          { "name": "sourceCode", "in": "path", "required": true, "schema": { "type": "string", "example": "ar01" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarot card",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TarotCard" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/tarot/spreads": {
+      "get": {
+        "tags": ["Tarot"],
+        "summary": "List Tarot spreads",
+        "responses": {
+          "200": {
+            "description": "Tarot spreads",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TarotSpreadsResponse" } } }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/tarot/spreads/{code}": {
+      "get": {
+        "tags": ["Tarot"],
+        "summary": "Get Tarot spread by code",
+        "parameters": [
+          { "name": "code", "in": "path", "required": true, "schema": { "type": "string", "example": "three_cards" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarot spread",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TarotSpread" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/tarot/readings": {
+      "post": {
+        "tags": ["Tarot"],
+        "summary": "Create Tarot reading",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateTarotReadingRequest" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Created reading",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TarotReading" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/tarot/readings/{id}": {
+      "get": {
+        "tags": ["Tarot"],
+        "summary": "Get Tarot reading",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarot reading",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TarotReading" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/wallet": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "Get current development user's wallet",
+        "description": "Uses DEV_USER_ID until real authentication exists.",
+        "responses": {
+          "200": {
+            "description": "Wallet",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Wallet" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/coin-transactions": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "List current development user's coin transactions",
+        "responses": {
+          "200": {
+            "description": "Coin transactions",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CoinTransactionsResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/check-ins": {
+      "post": {
+        "tags": ["Wallet"],
+        "summary": "Create daily check-in for current development user",
+        "responses": {
+          "200": {
+            "description": "Check-in result",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckInResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/lucky-colors/today": {
+      "get": {
+        "tags": ["Lucky Lifestyle"],
+        "summary": "Get today's lucky and avoid colors",
+        "parameters": [
+          { "name": "purpose", "in": "query", "required": false, "schema": { "$ref": "#/components/schemas/LuckyPurpose" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Today's colors",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyInsight" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/lucky-foods/today": {
+      "get": {
+        "tags": ["Lucky Lifestyle"],
+        "summary": "Get today's lucky foods",
+        "responses": {
+          "200": { "description": "Today's foods", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyInsight" } } } },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/lucky-items/today": {
+      "get": {
+        "tags": ["Lucky Lifestyle"],
+        "summary": "Get today's lucky items",
+        "responses": {
+          "200": { "description": "Today's items", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyInsight" } } } },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/avoidance/today": {
+      "get": {
+        "tags": ["Lucky Lifestyle"],
+        "summary": "Get today's avoidance recommendations",
+        "responses": {
+          "200": { "description": "Today's avoidances", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyInsight" } } } },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/daily-insights/today": {
+      "get": {
+        "tags": ["Lucky Lifestyle"],
+        "summary": "Get today's full daily insight snapshot",
+        "parameters": [
+          { "name": "purpose", "in": "query", "required": false, "schema": { "$ref": "#/components/schemas/LuckyPurpose" } }
+        ],
+        "responses": {
+          "200": { "description": "Daily insight", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyInsight" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/moon/today": {
+      "get": {
+        "tags": ["Moon"],
+        "summary": "Create today's moon report",
+        "responses": {
+          "200": {
+            "description": "Moon report",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoonReport" } } }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/moon/birthday": {
+      "post": {
+        "tags": ["Moon"],
+        "summary": "Create moon report by birth date",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoonBirthdayRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Moon report",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoonReport" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/moon/reports/{id}": {
+      "get": {
+        "tags": ["Moon"],
+        "summary": "Get stored moon report",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Moon report",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoonReport" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "Unauthorized": {
+        "description": "Development user is not configured",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "InternalError": {
+        "description": "Internal server error",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "checks", "timezone"],
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "checks": { "type": "object", "additionalProperties": { "type": "string" } },
+          "timezone": { "type": "string", "example": "Asia/Bangkok" }
+        }
+      },
+      "VersionResponse": {
+        "type": "object",
+        "required": ["name", "env", "version", "timezone"],
+        "properties": {
+          "name": { "type": "string", "example": "Moodora" },
+          "env": { "type": "string", "example": "local" },
+          "version": { "type": "string", "example": "0.1.0" },
+          "timezone": { "type": "string", "example": "Asia/Bangkok" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string", "example": "not_found" },
+              "message": { "type": "string", "example": "resource not found" }
+            }
+          }
+        }
+      },
+      "TarotCardsResponse": {
+        "type": "object",
+        "required": ["cards"],
+        "properties": { "cards": { "type": "array", "items": { "$ref": "#/components/schemas/TarotCard" } } }
+      },
+      "TarotCard": {
+        "type": "object",
+        "required": ["id", "sourceCode", "nameEn", "type", "meaningUpEn", "meaningRevEn", "descriptionEn", "assets"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "sourceCode": { "type": "string", "example": "ar01" },
+          "nameEn": { "type": "string", "example": "The Magician" },
+          "type": { "type": "string", "enum": ["major", "minor"] },
+          "suit": { "type": ["string", "null"], "enum": ["wands", "cups", "swords", "pentacles", null] },
+          "meaningUpEn": { "type": "string" },
+          "meaningRevEn": { "type": "string" },
+          "descriptionEn": { "type": "string" },
+          "assets": { "type": "array", "items": { "$ref": "#/components/schemas/TarotCardAsset" } }
+        }
+      },
+      "TarotCardAsset": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "deckCode": { "type": "string", "example": "rider_waite" },
+          "size": { "type": "string", "enum": ["thumb", "medium", "large"] },
+          "format": { "type": "string", "enum": ["webp", "jpg"] },
+          "url": { "type": "string" },
+          "width": { "type": "integer" },
+          "height": { "type": "integer" },
+          "fileSize": { "type": "integer", "format": "int64" },
+          "isDefault": { "type": "boolean" }
+        }
+      },
+      "TarotSpreadsResponse": {
+        "type": "object",
+        "required": ["spreads"],
+        "properties": { "spreads": { "type": "array", "items": { "$ref": "#/components/schemas/TarotSpread" } } }
+      },
+      "TarotSpread": {
+        "type": "object",
+        "required": ["code", "name", "description", "cardCount", "positions"],
+        "properties": {
+          "code": { "type": "string", "example": "three_cards" },
+          "name": { "type": "string", "example": "Three Cards" },
+          "description": { "type": "string" },
+          "cardCount": { "type": "integer", "example": 3 },
+          "positions": { "type": "array", "items": { "$ref": "#/components/schemas/TarotSpreadPosition" } }
+        }
+      },
+      "TarotSpreadPosition": {
+        "type": "object",
+        "required": ["positionNumber", "code", "name", "description"],
+        "properties": {
+          "positionNumber": { "type": "integer", "example": 1 },
+          "code": { "type": "string", "example": "past" },
+          "name": { "type": "string", "example": "อดีต" },
+          "description": { "type": "string" }
+        }
+      },
+      "CreateTarotReadingRequest": {
+        "type": "object",
+        "required": ["spreadCode"],
+        "properties": {
+          "spreadCode": { "type": "string", "example": "three_cards" },
+          "topic": { "type": "string", "enum": ["general", "love", "career", "money"], "default": "general" },
+          "language": { "type": "string", "enum": ["th", "en"], "default": "en" },
+          "allowReversed": { "type": "boolean", "default": true },
+          "question": { "type": "string", "example": "วันนี้ควรโฟกัสเรื่องความสัมพันธ์อย่างไร" }
+        }
+      },
+      "TarotReading": {
+        "type": "object",
+        "required": ["id", "spreadCode", "topic", "language", "question", "cards", "summary", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "spreadCode": { "type": "string" },
+          "topic": { "type": "string" },
+          "language": { "type": "string" },
+          "question": { "type": "string" },
+          "cards": { "type": "array", "items": { "$ref": "#/components/schemas/TarotReadingCard" } },
+          "summary": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TarotReadingCard": {
+        "type": "object",
+        "properties": {
+          "positionNumber": { "type": "integer" },
+          "positionCode": { "type": "string" },
+          "positionName": { "type": "string" },
+          "card": {
+            "type": "object",
+            "properties": {
+              "sourceCode": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          },
+          "orientation": { "type": "string", "enum": ["upright", "reversed"] },
+          "meaning": { "type": "string" },
+          "advice": { "type": "string" }
+        }
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "userId": { "type": "string", "format": "uuid" },
+          "coinBalance": { "type": "integer", "format": "int64" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CoinTransactionsResponse": {
+        "type": "object",
+        "properties": { "transactions": { "type": "array", "items": { "$ref": "#/components/schemas/CoinTransaction" } } }
+      },
+      "CoinTransaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "transactionType": { "type": "string", "example": "check_in" },
+          "amount": { "type": "integer", "format": "int64" },
+          "balanceAfter": { "type": "integer", "format": "int64" },
+          "reason": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CheckInResponse": {
+        "type": "object",
+        "properties": {
+          "checkedIn": { "type": "boolean" },
+          "rewardCoins": { "type": "integer", "format": "int64" },
+          "streakDay": { "type": "integer" },
+          "walletBalance": { "type": "integer", "format": "int64" },
+          "timezone": { "type": "string", "example": "Asia/Bangkok" },
+          "nextCheckInAt": { "type": "string", "format": "date-time" },
+          "alreadyChecked": { "type": "boolean" }
+        }
+      },
+      "LuckyPurpose": {
+        "type": "string",
+        "enum": ["general", "love", "career", "money", "study", "interview"],
+        "default": "general"
+      },
+      "DailyInsight": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "timezone": { "type": "string", "example": "Asia/Bangkok" },
+          "luckyColors": { "type": "array", "items": { "$ref": "#/components/schemas/LuckyColor" } },
+          "avoidColors": { "type": "array", "items": { "$ref": "#/components/schemas/LuckyColor" } },
+          "luckyFoods": { "type": "array", "items": { "$ref": "#/components/schemas/LuckyFood" } },
+          "luckyItems": { "type": "array", "items": { "$ref": "#/components/schemas/LuckyItem" } },
+          "avoidances": { "type": "array", "items": { "$ref": "#/components/schemas/Avoidance" } },
+          "walletBalance": { "type": "integer", "format": "int64" },
+          "checkInStatus": { "$ref": "#/components/schemas/CheckInStatus" },
+          "dailyTarot": { "$ref": "#/components/schemas/DailyTarot" },
+          "message": { "type": "string" }
+        }
+      },
+      "LuckyColor": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "code": { "type": "string" },
+          "nameTh": { "type": "string" },
+          "nameEn": { "type": "string" },
+          "hex": { "type": "string", "example": "#90CAF9" },
+          "meaning": { "type": "string" }
+        }
+      },
+      "LuckyFood": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "code": { "type": "string" },
+          "nameTh": { "type": "string" },
+          "nameEn": { "type": "string" },
+          "category": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "description": { "type": "string" }
+        }
+      },
+      "LuckyItem": {
+        "allOf": [{ "$ref": "#/components/schemas/LuckyFood" }]
+      },
+      "Avoidance": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "code": { "type": "string" },
+          "category": { "type": "string" },
+          "textTh": { "type": "string" },
+          "textEn": { "type": "string" },
+          "moodTag": { "type": "string" }
+        }
+      },
+      "CheckInStatus": {
+        "type": "object",
+        "properties": {
+          "checkedIn": { "type": "boolean" },
+          "localDate": { "type": "string", "format": "date" }
+        }
+      },
+      "DailyTarot": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "placeholder" },
+          "message": { "type": "string" }
+        }
+      },
+      "MoonBirthdayRequest": {
+        "type": "object",
+        "required": ["birthDate"],
+        "properties": {
+          "birthDate": { "type": "string", "format": "date", "example": "2000-02-14" },
+          "timezone": { "type": "string", "example": "Asia/Bangkok" }
+        }
+      },
+      "MoonReport": {
+        "type": "object",
+        "required": ["id", "targetDate", "timezone", "moonPhase", "illumination", "moonAge", "interpretation", "calculationMethodVersion", "source", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "targetDate": { "type": "string", "format": "date" },
+          "timezone": { "type": "string", "example": "Asia/Bangkok" },
+          "moonPhase": { "$ref": "#/components/schemas/MoonPhase" },
+          "illumination": { "type": "number", "format": "double", "minimum": 0, "maximum": 100 },
+          "moonAge": { "type": "number", "format": "double", "minimum": 0, "maximum": 30 },
+          "imageUrl": { "type": ["string", "null"] },
+          "interpretation": { "$ref": "#/components/schemas/MoonInterpretation" },
+          "calculationMethodVersion": { "type": "string", "example": "moon_phase_v1" },
+          "source": { "$ref": "#/components/schemas/MoonSource" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MoonPhase": {
+        "type": "string",
+        "enum": ["new_moon", "waxing_crescent", "first_quarter", "waxing_gibbous", "full_moon", "waning_gibbous", "last_quarter", "waning_crescent"]
+      },
+      "MoonInterpretation": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "message": { "type": "string" },
+          "advice": { "type": "string" }
+        }
+      },
+      "MoonSource": {
+        "type": "object",
+        "properties": {
+          "sourceCode": { "type": "string", "example": "internal_moon_calculation" },
+          "sourceName": { "type": "string" },
+          "sourceUrl": { "type": "string" }
+        }
+      }
+    }
+  }
+}
