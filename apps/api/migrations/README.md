@@ -73,3 +73,11 @@ psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
   -v ON_ERROR_STOP=1 \
   -f apps/api/seeds/lifestyle/001_lucky_lifestyle.sql
 ```
+
+Moon and Astronomy source data is seeded separately:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/moon/001_astronomy_sources.sql
+```

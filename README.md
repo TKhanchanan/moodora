@@ -91,6 +91,14 @@ psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
   -f apps/api/seeds/lifestyle/001_lucky_lifestyle.sql
 ```
 
+Run Moon and Astronomy source seeds:
+
+```sh
+psql "postgres://moodora:moodora@localhost:5432/moodora_db?sslmode=disable" \
+  -v ON_ERROR_STOP=1 \
+  -f apps/api/seeds/moon/001_astronomy_sources.sql
+```
+
 The future 78-card tarotapi.dev seed structure is documented in `apps/api/seeds/tarot/002_cards_template.sql`. It does not fetch external data yet.
 
 ## Run API
@@ -160,3 +168,17 @@ curl http://localhost:8080/api/v1/daily-insights/today
 ```
 
 Daily insight snapshots are stored by local date and timezone so the same user/date response stays stable. Recommendations are lifestyle and self-reflection prompts, not guaranteed outcomes.
+
+Moon endpoints:
+
+```sh
+curl http://localhost:8080/api/v1/moon/today
+
+curl -X POST http://localhost:8080/api/v1/moon/birthday \
+  -H "Content-Type: application/json" \
+  -d '{"birthDate":"2000-02-14","timezone":"Asia/Bangkok"}'
+
+curl http://localhost:8080/api/v1/moon/reports/{id}
+```
+
+Moon calculations use Moodora's internal deterministic `moon_phase_v1` method. NASA/APOD and NASA SVS are seeded as future astronomy sources only; the API does not call live NASA services yet.
