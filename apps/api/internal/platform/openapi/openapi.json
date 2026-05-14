@@ -429,7 +429,12 @@
           "topic": { "type": "string", "enum": ["general", "love", "career", "money"], "default": "general" },
           "language": { "type": "string", "enum": ["th", "en"], "default": "en" },
           "allowReversed": { "type": "boolean", "default": true },
-          "question": { "type": "string", "example": "วันนี้ควรโฟกัสเรื่องความสัมพันธ์อย่างไร" }
+          "question": { "type": "string", "example": "วันนี้ควรโฟกัสเรื่องความสัมพันธ์อย่างไร" },
+          "selectedCardSourceCodes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["ar00", "wa01", "cu13"]
+          }
         }
       },
       "TarotReading": {
@@ -456,7 +461,8 @@
             "type": "object",
             "properties": {
               "sourceCode": { "type": "string" },
-              "name": { "type": "string" }
+              "name": { "type": "string" },
+              "assets": { "type": "array", "items": { "$ref": "#/components/schemas/TarotCardAsset" } }
             }
           },
           "orientation": { "type": "string", "enum": ["upright", "reversed"] },

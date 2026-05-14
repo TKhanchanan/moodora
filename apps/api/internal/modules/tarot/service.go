@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Service struct {
@@ -52,6 +54,9 @@ func (s *Service) CreateReading(ctx context.Context, req CreateReadingRequest) (
 	req.Topic = strings.TrimSpace(req.Topic)
 	req.Language = strings.TrimSpace(req.Language)
 	req.Question = strings.TrimSpace(req.Question)
+	for i := range req.SelectedCardSourceCodes {
+		req.SelectedCardSourceCodes[i] = strings.TrimSpace(req.SelectedCardSourceCodes[i])
+	}
 
 	if req.SpreadCode == "" {
 		return ReadingResponse{}, fmt.Errorf("spreadCode is required")
@@ -83,7 +88,7 @@ func (s *Service) CreateReading(ctx context.Context, req CreateReadingRequest) (
 	}
 	defer tx.Rollback(ctx)
 
-	drawn, err := s.repo.drawCards(ctx, tx, len(spread.Positions))
+	drawn, err := s.selectReadingCards(ctx, tx, req, len(spread.Positions))
 	if err != nil {
 		return ReadingResponse{}, err
 	}
@@ -117,6 +122,7 @@ func (s *Service) CreateReading(ctx context.Context, req CreateReadingRequest) (
 			Card: ReadingInfo{
 				SourceCode: card.SourceCode,
 				Name:       card.NameEn,
+				Assets:     card.Assets,
 			},
 			Orientation: orientation,
 			Meaning:     found.Meaning,
@@ -176,6 +182,27 @@ func (s *Service) CreateReading(ctx context.Context, req CreateReadingRequest) (
 	response.Cards = readingCards
 	response.Summary = summary
 	return response, nil
+}
+
+func (s *Service) selectReadingCards(ctx context.Context, tx pgx.Tx, req CreateReadingRequest, cardCount int) ([]Card, error) {
+	if len(req.SelectedCardSourceCodes) == 0 {
+		return s.repo.drawCards(ctx, tx, cardCount)
+	}
+	if len(req.SelectedCardSourceCodes) != cardCount {
+		return nil, fmt.Errorf("selectedCardSourceCodes must contain exactly %d cards", cardCount)
+	}
+
+	seen := map[string]bool{}
+	for _, sourceCode := range req.SelectedCardSourceCodes {
+		if sourceCode == "" {
+			return nil, fmt.Errorf("selectedCardSourceCodes contains an empty card")
+		}
+		if seen[sourceCode] {
+			return nil, fmt.Errorf("selectedCardSourceCodes contains duplicate card %q", sourceCode)
+		}
+		seen[sourceCode] = true
+	}
+	return s.repo.findCardsBySourceCodes(ctx, tx, req.SelectedCardSourceCodes)
 }
 
 func (s *Service) GetReading(ctx context.Context, id string) (ReadingResponse, error) {

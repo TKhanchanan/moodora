@@ -20,13 +20,13 @@ export function CardArt({
         width={asset.width}
         height={asset.height}
         unoptimized
-        className="aspect-[2/3] w-full rounded-2xl border border-white/70 object-cover shadow-sm"
+        className="aspect-[3/5] w-full rounded-l object-cover shadow-sm"
       />
     );
   }
 
   return (
-    <div className="grid aspect-[2/3] w-full place-items-center rounded-2xl border border-white/70 bg-gradient-to-br from-lilac via-mist to-sky p-4 text-center shadow-sm">
+    <div className="grid aspect-[3/5] w-full place-items-center rounded-l bg-gradient-to-br from-lilac via-mist to-sky p-4 text-center shadow-sm">
       <div>
         <p className="text-xs uppercase tracking-[0.25em] text-ink/45">{sourceCode}</p>
         <p className="mt-3 text-sm font-semibold text-ink">{name}</p>

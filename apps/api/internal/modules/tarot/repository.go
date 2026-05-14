@@ -165,8 +165,16 @@ func (r *Repository) listSpreadPositions(ctx context.Context, spreadID string) (
 }
 
 func (r *Repository) attachAssets(ctx context.Context, cards []Card) ([]Card, error) {
+	return attachAssets(ctx, r.db, cards)
+}
+
+type assetQuerier interface {
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+}
+
+func attachAssets(ctx context.Context, db assetQuerier, cards []Card) ([]Card, error) {
 	for i := range cards {
-		rows, err := r.db.Query(ctx, `
+		rows, err := db.Query(ctx, `
 			SELECT id::text, deck_code, size, format, url, width, height, file_size, is_default
 			FROM tarot_card_assets
 			WHERE card_id = $1
@@ -232,7 +240,43 @@ func (r *Repository) drawCards(ctx context.Context, tx pgx.Tx, limit int) ([]Car
 	}
 	defer rows.Close()
 
-	return scanCards(rows)
+	cards, err := scanCards(rows)
+	if err != nil {
+		return nil, err
+	}
+	return attachAssets(ctx, tx, cards)
+}
+
+func (r *Repository) findCardsBySourceCodes(ctx context.Context, tx pgx.Tx, sourceCodes []string) ([]Card, error) {
+	rows, err := tx.Query(ctx, `
+		SELECT id::text, source_code, name_en, type, suit, meaning_up_en, meaning_rev_en, description_en
+		FROM tarot_cards
+		WHERE source_code = ANY($1)
+	`, sourceCodes)
+	if err != nil {
+		return nil, fmt.Errorf("find selected tarot cards: %w", err)
+	}
+	defer rows.Close()
+
+	foundCards, err := scanCards(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	bySourceCode := make(map[string]Card, len(foundCards))
+	for _, card := range foundCards {
+		bySourceCode[card.SourceCode] = card
+	}
+
+	cards := make([]Card, 0, len(sourceCodes))
+	for _, sourceCode := range sourceCodes {
+		card, ok := bySourceCode[sourceCode]
+		if !ok {
+			return nil, fmt.Errorf("selected tarot card %q not found", sourceCode)
+		}
+		cards = append(cards, card)
+	}
+	return attachAssets(ctx, tx, cards)
 }
 
 func (r *Repository) findInterpretation(ctx context.Context, tx pgx.Tx, card Card, language string, topic string, orientation string) (interpretation, error) {

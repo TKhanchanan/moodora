@@ -32,7 +32,7 @@ export function TarotResult({ id }: { id: string }) {
           .map((card) => (
             <Card key={`${card.positionNumber}-${card.card.sourceCode}`}>
               <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
-                <CardArt sourceCode={card.card.sourceCode} name={card.card.name} />
+                <CardArt sourceCode={card.card.sourceCode} name={card.card.name} assets={card.card.assets} />
                 <div>
                   <p className="text-sm text-ink/55">{card.positionNumber}. {card.positionName} · {card.orientation}</p>
                   <h2 className="mt-2 text-xl font-semibold">{card.card.name}</h2>

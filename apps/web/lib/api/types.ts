@@ -71,6 +71,7 @@ export type CreateTarotReadingRequest = {
   language: "th" | "en";
   allowReversed: boolean;
   question?: string;
+  selectedCardSourceCodes?: string[];
 };
 
 export type TarotReading = {
@@ -86,6 +87,7 @@ export type TarotReading = {
     card: {
       sourceCode: string;
       name: string;
+      assets: TarotAsset[];
     };
     orientation: "upright" | "reversed";
     meaning: string;

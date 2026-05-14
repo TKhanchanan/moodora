@@ -76,11 +76,12 @@ type SpreadPosition struct {
 }
 
 type CreateReadingRequest struct {
-	SpreadCode    string `json:"spreadCode"`
-	Topic         string `json:"topic"`
-	Language      string `json:"language"`
-	AllowReversed bool   `json:"allowReversed"`
-	Question      string `json:"question"`
+	SpreadCode              string   `json:"spreadCode"`
+	Topic                   string   `json:"topic"`
+	Language                string   `json:"language"`
+	AllowReversed           bool     `json:"allowReversed"`
+	Question                string   `json:"question"`
+	SelectedCardSourceCodes []string `json:"selectedCardSourceCodes"`
 }
 
 type ReadingResponse struct {
@@ -105,8 +106,9 @@ type ReadingCard struct {
 }
 
 type ReadingInfo struct {
-	SourceCode string `json:"sourceCode"`
-	Name       string `json:"name"`
+	SourceCode string  `json:"sourceCode"`
+	Name       string  `json:"name"`
+	Assets     []Asset `json:"assets"`
 }
 
 type interpretation struct {

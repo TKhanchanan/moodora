@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -61,8 +62,23 @@ type processedAsset struct {
 	isDefault  bool
 }
 
+type sourceImages struct {
+	files   map[string]string
+	missing []string
+	unknown []string
+}
+
+type pipelineSummary struct {
+	sourceImages   int
+	processedCount int
+	uploadedCount  int
+	upsertedCount  int
+	missingImages  []string
+	unknownFiles   []string
+}
+
 func main() {
-	inputDir := flag.String("input", "local-assets/tarot/rider_waite/originals", "source image directory")
+	inputDir := flag.String("input", "../../local-assets/tarot", "source image directory")
 	outputDir := flag.String("output", "processed-assets/tarot/rider_waite", "processed image output directory")
 	flag.Parse()
 
@@ -98,12 +114,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	sourceFiles, err := findSourceImages(*inputDir, cardIDs)
+	sourceImages, err := findSourceImages(*inputDir, cardIDs)
 	if err != nil {
 		logger.Error("failed to validate source images", "error", err)
 		os.Exit(1)
 	}
-	if len(sourceFiles) == 0 {
+	if len(sourceImages.files) == 0 {
 		logger.Error("no source images found", "input", *inputDir)
 		os.Exit(1)
 	}
@@ -118,21 +134,38 @@ func main() {
 		os.Exit(1)
 	}
 
-	var processed int
-	for sourceCode, sourcePath := range sourceFiles {
+	summary := pipelineSummary{
+		sourceImages:  len(sourceImages.files),
+		missingImages: sourceImages.missing,
+		unknownFiles:  sourceImages.unknown,
+	}
+	for _, sourceCode := range sortedKeys(sourceImages.files) {
+		sourcePath := sourceImages.files[sourceCode]
 		assets, err := processSource(ctx, sourceCode, cardIDs[sourceCode], sourcePath, *outputDir, cfg.storage, storageClient)
 		if err != nil {
 			logger.Error("failed to process source image", "sourceCode", sourceCode, "error", err)
 			os.Exit(1)
 		}
-		if err := upsertAssets(ctx, db, assets); err != nil {
+		upserted, err := upsertAssets(ctx, db, assets)
+		if err != nil {
 			logger.Error("failed to upsert tarot card assets", "sourceCode", sourceCode, "error", err)
 			os.Exit(1)
 		}
-		processed += len(assets)
+		summary.processedCount += len(assets)
+		summary.uploadedCount += len(assets)
+		summary.upsertedCount += upserted
 	}
 
-	logger.Info("tarot assets processed", "sourceImages", len(sourceFiles), "assets", processed)
+	printSummary(summary)
+	logger.Info(
+		"tarot asset pipeline completed",
+		"sourceImages", summary.sourceImages,
+		"processed", summary.processedCount,
+		"uploaded", summary.uploadedCount,
+		"upserted", summary.upsertedCount,
+		"missingImages", len(summary.missingImages),
+		"unknownFiles", len(summary.unknownFiles),
+	)
 }
 
 func loadConfig() (appConfig, error) {
@@ -194,10 +227,10 @@ func loadTarotCards(ctx context.Context, db *pgxpool.Pool) (map[string]string, e
 	return cards, nil
 }
 
-func findSourceImages(inputDir string, cardIDs map[string]string) (map[string]string, error) {
+func findSourceImages(inputDir string, cardIDs map[string]string) (sourceImages, error) {
 	entries, err := os.ReadDir(inputDir)
 	if err != nil {
-		return nil, fmt.Errorf("read input directory %q: %w", inputDir, err)
+		return sourceImages{}, fmt.Errorf("read input directory %q: %w", inputDir, err)
 	}
 
 	sourceFiles := map[string]string{}
@@ -212,7 +245,7 @@ func findSourceImages(inputDir string, cardIDs map[string]string) (map[string]st
 			continue
 		}
 
-		sourceCode := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+		sourceCode := sourceCodeFromImageName(entry.Name())
 		if _, ok := cardIDs[sourceCode]; !ok {
 			unknown = append(unknown, entry.Name())
 			continue
@@ -220,11 +253,62 @@ func findSourceImages(inputDir string, cardIDs map[string]string) (map[string]st
 		sourceFiles[sourceCode] = filepath.Join(inputDir, entry.Name())
 	}
 
-	if len(unknown) > 0 {
-		sort.Strings(unknown)
-		return nil, fmt.Errorf("source image filenames do not match tarot_cards.source_code: %s", strings.Join(unknown, ", "))
+	var missing []string
+	for sourceCode := range cardIDs {
+		if _, ok := sourceFiles[sourceCode]; !ok {
+			missing = append(missing, sourceCode)
+		}
 	}
-	return sourceFiles, nil
+	sort.Strings(missing)
+	sort.Strings(unknown)
+	return sourceImages{files: sourceFiles, missing: missing, unknown: unknown}, nil
+}
+
+func sourceCodeFromImageName(name string) string {
+	baseName := strings.TrimSuffix(name, filepath.Ext(name))
+	if sourceCode, ok := riderWaiteSmithSourceCode(baseName); ok {
+		return sourceCode
+	}
+	return baseName
+}
+
+func riderWaiteSmithSourceCode(baseName string) (string, bool) {
+	parts := strings.Split(baseName, "-")
+	if len(parts) != 3 || parts[0] != "RWSa" {
+		return "", false
+	}
+
+	switch parts[1] {
+	case "T":
+		return "ar" + parts[2], true
+	case "W":
+		return "wa" + riderWaiteSmithRank(parts[2]), true
+	case "C":
+		return "cu" + riderWaiteSmithRank(parts[2]), true
+	case "S":
+		return "sw" + riderWaiteSmithRank(parts[2]), true
+	case "P":
+		return "pe" + riderWaiteSmithRank(parts[2]), true
+	default:
+		return "", false
+	}
+}
+
+func riderWaiteSmithRank(rank string) string {
+	switch rank {
+	case "0A":
+		return "01"
+	case "J1":
+		return "11"
+	case "J2":
+		return "12"
+	case "QU":
+		return "13"
+	case "KI":
+		return "14"
+	default:
+		return rank
+	}
 }
 
 func processSource(ctx context.Context, sourceCode string, cardID string, sourcePath string, outputDir string, cfg config.StorageConfig, storageClient *minio.Client) ([]processedAsset, error) {
@@ -359,9 +443,31 @@ func writeWebP(path string, img image.Image) error {
 	return cmd.Run()
 }
 
-func upsertAssets(ctx context.Context, db *pgxpool.Pool, assets []processedAsset) error {
+func upsertAssets(ctx context.Context, db *pgxpool.Pool, assets []processedAsset) (int, error) {
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("begin upsert transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var upserted int
 	for _, asset := range assets {
-		_, err := db.Exec(ctx, `
+		if asset.isDefault {
+			_, err := tx.Exec(ctx, `
+				UPDATE tarot_card_assets
+				SET is_default = false,
+					updated_at = now()
+				WHERE card_id = $1
+					AND deck_code = $2
+					AND is_default = true
+					AND NOT (size = $3 AND format = $4)
+			`, asset.cardID, deckCode, asset.size, asset.format)
+			if err != nil {
+				return 0, fmt.Errorf("clear existing default for %s: %w", asset.sourceCode, err)
+			}
+		}
+
+		tag, err := tx.Exec(ctx, `
 			INSERT INTO tarot_card_assets (
 				card_id, deck_code, size, format, url, width, height, file_size, is_default
 			)
@@ -375,10 +481,38 @@ func upsertAssets(ctx context.Context, db *pgxpool.Pool, assets []processedAsset
 				updated_at = now()
 		`, asset.cardID, deckCode, asset.size, asset.format, asset.url, asset.width, asset.height, asset.fileSize, asset.isDefault)
 		if err != nil {
-			return fmt.Errorf("upsert %s %s %s: %w", asset.sourceCode, asset.format, asset.size, err)
+			return 0, fmt.Errorf("upsert %s %s %s: %w", asset.sourceCode, asset.format, asset.size, err)
 		}
+		upserted += int(tag.RowsAffected())
 	}
-	return nil
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("commit upsert transaction: %w", err)
+	}
+	return upserted, nil
+}
+
+func sortedKeys(values map[string]string) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func printSummary(summary pipelineSummary) {
+	fmt.Println("Tarot asset pipeline summary")
+	fmt.Printf("processed count: %d\n", summary.processedCount)
+	fmt.Printf("uploaded count: %d\n", summary.uploadedCount)
+	fmt.Printf("upserted count: %d\n", summary.upsertedCount)
+	fmt.Printf("missing images: %d\n", len(summary.missingImages))
+	if len(summary.missingImages) > 0 {
+		fmt.Printf("missing image source_codes: %s\n", strings.Join(summary.missingImages, ", "))
+	}
+	fmt.Printf("unknown files: %d\n", len(summary.unknownFiles))
+	if len(summary.unknownFiles) > 0 {
+		fmt.Printf("unknown file names: %s\n", strings.Join(summary.unknownFiles, ", "))
+	}
 }
 
 func getEnv(key string, fallback string) string {
