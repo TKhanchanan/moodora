@@ -1,0 +1,41 @@
+-- Placeholder structure for the future 78-card tarotapi.dev seed.
+--
+-- Do not fetch tarotapi.dev from this seed file. A later import command should
+-- fetch, validate, normalize, and review source data before inserting it.
+--
+-- Expected source_code examples from tarotapi.dev:
+--   ar01  major arcana example
+--   sw08  minor arcana swords example
+--
+-- Future inserts should use this shape:
+--
+-- INSERT INTO tarot_cards (
+--     source_code,
+--     name_en,
+--     type,
+--     suit,
+--     meaning_up_en,
+--     meaning_rev_en,
+--     description_en
+-- )
+-- VALUES
+--     (
+--         'ar01',
+--         'The Magician',
+--         'major',
+--         NULL,
+--         '...',
+--         '...',
+--         '...'
+--     )
+-- ON CONFLICT (source_code) DO UPDATE
+-- SET name_en = EXCLUDED.name_en,
+--     type = EXCLUDED.type,
+--     suit = EXCLUDED.suit,
+--     meaning_up_en = EXCLUDED.meaning_up_en,
+--     meaning_rev_en = EXCLUDED.meaning_rev_en,
+--     description_en = EXCLUDED.description_en,
+--     updated_at = now();
+--
+-- The completed seed should include all 78 cards before application code relies
+-- on Tarot card draws.
