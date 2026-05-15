@@ -7,7 +7,7 @@ import (
 )
 
 func TestBuildSummaryUsesSelectedMeanings(t *testing.T) {
-	summary := BuildSummary([]ReadingCard{
+	summary := BuildSummary("en", []ReadingCard{
 		{Meaning: "First reflection."},
 		{Meaning: "Second reflection."},
 		{Meaning: "Third reflection."},

@@ -368,16 +368,18 @@
       },
       "TarotCard": {
         "type": "object",
-        "required": ["id", "sourceCode", "nameEn", "type", "meaningUpEn", "meaningRevEn", "descriptionEn", "assets"],
+        "required": ["id", "sourceCode", "nameEn", "nameTh", "type", "meaningUpEn", "meaningRevEn", "descriptionEn", "descriptionTh", "assets"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "sourceCode": { "type": "string", "example": "ar01" },
           "nameEn": { "type": "string", "example": "The Magician" },
+          "nameTh": { "type": "string", "example": "นักมายากล" },
           "type": { "type": "string", "enum": ["major", "minor"] },
           "suit": { "type": ["string", "null"], "enum": ["wands", "cups", "swords", "pentacles", null] },
           "meaningUpEn": { "type": "string" },
           "meaningRevEn": { "type": "string" },
           "descriptionEn": { "type": "string" },
+          "descriptionTh": { "type": "string" },
           "assets": { "type": "array", "items": { "$ref": "#/components/schemas/TarotCardAsset" } }
         }
       },
@@ -462,6 +464,12 @@
             "properties": {
               "sourceCode": { "type": "string" },
               "name": { "type": "string" },
+              "nameEn": { "type": "string" },
+              "nameTh": { "type": "string" },
+              "type": { "type": "string", "enum": ["major", "minor"] },
+              "suit": { "type": ["string", "null"], "enum": ["wands", "cups", "swords", "pentacles", null] },
+              "characteristic": { "type": "string" },
+              "description": { "type": "string" },
               "assets": { "type": "array", "items": { "$ref": "#/components/schemas/TarotCardAsset" } }
             }
           },

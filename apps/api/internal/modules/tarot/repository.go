@@ -65,7 +65,7 @@ func (r *Repository) ListCards(ctx context.Context) ([]Card, error) {
 	if err != nil {
 		return nil, err
 	}
-	return r.attachAssets(ctx, cards)
+	return r.attachCardDetails(ctx, r.db, cards)
 }
 
 func (r *Repository) GetCardBySourceCode(ctx context.Context, sourceCode string) (Card, error) {
@@ -84,6 +84,10 @@ func (r *Repository) GetCardBySourceCode(ctx context.Context, sourceCode string)
 	}
 
 	cards, err := r.attachAssets(ctx, []Card{card})
+	if err != nil {
+		return Card{}, err
+	}
+	cards, err = attachTranslations(ctx, r.db, cards)
 	if err != nil {
 		return Card{}, err
 	}
@@ -168,6 +172,14 @@ func (r *Repository) attachAssets(ctx context.Context, cards []Card) ([]Card, er
 	return attachAssets(ctx, r.db, cards)
 }
 
+func (r *Repository) attachCardDetails(ctx context.Context, db assetQuerier, cards []Card) ([]Card, error) {
+	cards, err := attachAssets(ctx, db, cards)
+	if err != nil {
+		return nil, err
+	}
+	return attachTranslations(ctx, db, cards)
+}
+
 type assetQuerier interface {
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
@@ -191,6 +203,42 @@ func attachAssets(ctx context.Context, db assetQuerier, cards []Card) ([]Card, e
 				return nil, fmt.Errorf("scan tarot card asset: %w", err)
 			}
 			cards[i].Assets = append(cards[i].Assets, asset)
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		rows.Close()
+	}
+	return cards, nil
+}
+
+func attachTranslations(ctx context.Context, db assetQuerier, cards []Card) ([]Card, error) {
+	for i := range cards {
+		rows, err := db.Query(ctx, `
+			SELECT language, name, description, meaning_upright, meaning_reversed
+			FROM tarot_card_translations
+			WHERE card_id = $1
+				AND language IN ('th', 'en')
+		`, cards[i].ID)
+		if err != nil {
+			return nil, fmt.Errorf("list tarot card translations: %w", err)
+		}
+
+		for rows.Next() {
+			var language string
+			var name string
+			var description string
+			var meaningUpright string
+			var meaningReversed string
+			if err := rows.Scan(&language, &name, &description, &meaningUpright, &meaningReversed); err != nil {
+				rows.Close()
+				return nil, fmt.Errorf("scan tarot card translation: %w", err)
+			}
+			if language == "th" {
+				cards[i].NameTh = name
+				cards[i].DescriptionTh = description
+			}
 		}
 		if err := rows.Err(); err != nil {
 			rows.Close()
@@ -244,7 +292,7 @@ func (r *Repository) drawCards(ctx context.Context, tx pgx.Tx, limit int) ([]Car
 	if err != nil {
 		return nil, err
 	}
-	return attachAssets(ctx, tx, cards)
+	return r.attachCardDetails(ctx, tx, cards)
 }
 
 func (r *Repository) findCardsBySourceCodes(ctx context.Context, tx pgx.Tx, sourceCodes []string) ([]Card, error) {
@@ -276,7 +324,7 @@ func (r *Repository) findCardsBySourceCodes(ctx context.Context, tx pgx.Tx, sour
 		}
 		cards = append(cards, card)
 	}
-	return attachAssets(ctx, tx, cards)
+	return r.attachCardDetails(ctx, tx, cards)
 }
 
 func (r *Repository) findInterpretation(ctx context.Context, tx pgx.Tx, card Card, language string, topic string, orientation string) (interpretation, error) {

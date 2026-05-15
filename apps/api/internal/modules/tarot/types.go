@@ -38,11 +38,13 @@ type Card struct {
 	ID            string  `json:"id"`
 	SourceCode    string  `json:"sourceCode"`
 	NameEn        string  `json:"nameEn"`
+	NameTh        string  `json:"nameTh"`
 	Type          string  `json:"type"`
 	Suit          *string `json:"suit"`
 	MeaningUpEn   string  `json:"meaningUpEn"`
 	MeaningRevEn  string  `json:"meaningRevEn"`
 	DescriptionEn string  `json:"descriptionEn"`
+	DescriptionTh string  `json:"descriptionTh"`
 	Assets        []Asset `json:"assets"`
 }
 
@@ -106,9 +108,15 @@ type ReadingCard struct {
 }
 
 type ReadingInfo struct {
-	SourceCode string  `json:"sourceCode"`
-	Name       string  `json:"name"`
-	Assets     []Asset `json:"assets"`
+	SourceCode     string  `json:"sourceCode"`
+	Name           string  `json:"name"`
+	NameEn         string  `json:"nameEn"`
+	NameTh         string  `json:"nameTh"`
+	Type           string  `json:"type"`
+	Suit           *string `json:"suit"`
+	Characteristic string  `json:"characteristic"`
+	Description    string  `json:"description"`
+	Assets         []Asset `json:"assets"`
 }
 
 type interpretation struct {

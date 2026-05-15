@@ -33,7 +33,7 @@ export function TarotSetup() {
   });
   const [shuffleNonce, setShuffleNonce] = useState(() => Math.floor(Math.random() * 1_000_000));
   const [selectedSourceCodes, setSelectedSourceCodes] = useState<string[]>([]);
-  const [deckFanned, setDeckFanned] = useState(false);
+  const [deckFanned, setDeckFanned] = useState(true);
   const [shuffleStep, setShuffleStep] = useState<"idle" | "gathering" | "animating">("idle");
   const isShuffling = shuffleStep !== "idle";
 
@@ -110,7 +110,7 @@ export function TarotSetup() {
                       setForm((current) => ({ ...current, spreadCode: spread.code }));
                       setSelectedSourceCodes([]);
                       setShuffleNonce((current) => current + 1);
-                      setDeckFanned(false);
+                      setDeckFanned(true);
                       setShuffleStep("idle");
                     }}
                   >
@@ -141,8 +141,8 @@ export function TarotSetup() {
           </div>
         </div>
 
-        <div className="relative mt-6 h-[720px] w-full">
-          <div className="absolute left-1/2 top-0 h-[200px] w-[120px] -translate-x-1/2 sm:h-[240px] sm:w-[144px]">
+        <div className="relative mt-6 h-[460px] sm:h-[720px] w-full [--radius:160px] sm:[--radius:360px] [--shuffle-dist:55px] sm:[--shuffle-dist:90px]">
+          <div className="absolute left-1/2 top-0 h-[110px] w-[66px] -translate-x-1/2 sm:h-[200px] sm:w-[120px]">
             {shuffledCards.map((card, index) => {
               const selectedIndex = selectedSourceCodes.indexOf(card.sourceCode);
               const isSelected = selectedIndex >= 0;
@@ -169,13 +169,13 @@ export function TarotSetup() {
                     });
                   }}
                   className={[
-                    "absolute left-0 top-0 h-[200px] w-[120px] rounded-md bg-[#050505] bg-cover bg-center shadow-[0_0_5px_rgba(0,0,0,0.5)] focus:outline-none focus:ring-2 focus:ring-ink disabled:cursor-not-allowed disabled:opacity-45 sm:h-[240px] sm:w-[144px]",
+                    "absolute left-0 top-0 h-[110px] w-[66px] rounded-md bg-[#050505] bg-cover bg-center shadow-[0_0_5px_rgba(0,0,0,0.5)] focus:outline-none focus:ring-2 focus:ring-ink disabled:cursor-not-allowed disabled:opacity-45 sm:h-[200px] sm:w-[120px]",
                     isAnimatingCard ? "" : "transition-transform duration-[350ms] ease-in-out hover:-translate-y-2"
                   ].join(" ")}
                   style={{
                     backgroundImage: "url('/tarot/card-back.png')",
                     transform: cardStackTransform(index, shuffledCards.length, deckFanned, isSelected),
-                    transformOrigin: "center 360px",
+                    transformOrigin: "center var(--radius)",
                     zIndex: isAnimatingCard ? undefined : (isSelected ? 200 + selectedIndex : index + 1),
                     animation: isAnimatingCard ? `custom-tarot-shuffle 500ms linear ${reverseOffset * 120}ms forwards` : undefined
                   }}
@@ -190,7 +190,7 @@ export function TarotSetup() {
             })}
           </div>
 
-          <div className="absolute left-1/2 top-[360px] z-[300] flex w-full max-w-[280px] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
+          <div className="absolute left-1/2 top-[380px] sm:top-[360px] z-[300] flex w-full max-w-[280px] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
             <div className="flex gap-2.5">
               <button
                 type="button"
@@ -257,11 +257,11 @@ export function TarotSetup() {
             z-index: 400;
           }
           45% {
-            transform: translate(90px, -8px) rotate(4deg);
+            transform: translate(var(--shuffle-dist), -8px) rotate(4deg);
             z-index: 400;
           }
           50% {
-            transform: translate(90px, -8px) rotate(4deg);
+            transform: translate(var(--shuffle-dist), -8px) rotate(4deg);
             z-index: -1;
           }
           100% {

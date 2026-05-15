@@ -120,9 +120,15 @@ func (s *Service) CreateReading(ctx context.Context, req CreateReadingRequest) (
 			PositionCode:   position.Code,
 			PositionName:   position.Name,
 			Card: ReadingInfo{
-				SourceCode: card.SourceCode,
-				Name:       card.NameEn,
-				Assets:     card.Assets,
+				SourceCode:     card.SourceCode,
+				Name:           displayCardName(card, req.Language),
+				NameEn:         card.NameEn,
+				NameTh:         card.NameTh,
+				Type:           card.Type,
+				Suit:           card.Suit,
+				Characteristic: cardCharacteristic(card, req.Language),
+				Description:    displayCardDescription(card, req.Language),
+				Assets:         card.Assets,
 			},
 			Orientation: orientation,
 			Meaning:     found.Meaning,
@@ -130,7 +136,7 @@ func (s *Service) CreateReading(ctx context.Context, req CreateReadingRequest) (
 		})
 	}
 
-	summary := BuildSummary(readingCards)
+	summary := BuildSummary(req.Language, readingCards)
 	resultSnapshot, err := json.Marshal(map[string]any{
 		"summary": summary,
 		"cards":   readingCards,
@@ -205,13 +211,73 @@ func (s *Service) selectReadingCards(ctx context.Context, tx pgx.Tx, req CreateR
 	return s.repo.findCardsBySourceCodes(ctx, tx, req.SelectedCardSourceCodes)
 }
 
+func displayCardName(card Card, language string) string {
+	if language == "th" && card.NameTh != "" {
+		return card.NameTh
+	}
+	return card.NameEn
+}
+
+func displayCardDescription(card Card, language string) string {
+	if language == "th" && card.DescriptionTh != "" {
+		return card.DescriptionTh
+	}
+	return card.DescriptionEn
+}
+
+func cardCharacteristic(card Card, language string) string {
+	if language == "th" {
+		if card.Type == "major" {
+			return "เมเจอร์อาร์คานา: ไพ่บทเรียนสำคัญและจังหวะเปลี่ยนผ่านของชีวิต"
+		}
+		return "ไมเนอร์อาร์คานา ชุด" + suitLabel(card.Suit, language) + ": ไพ่สถานการณ์ประจำวันและพลังที่จับต้องได้"
+	}
+
+	if card.Type == "major" {
+		return "Major Arcana: a broad life theme, lesson, or turning point for reflection"
+	}
+	return "Minor Arcana, suit of " + suitLabel(card.Suit, language) + ": a practical day-to-day influence"
+}
+
+func suitLabel(suit *string, language string) string {
+	if suit == nil {
+		if language == "th" {
+			return "ไม่มีชุด"
+		}
+		return "none"
+	}
+	if language != "th" {
+		return *suit
+	}
+	switch *suit {
+	case "wands":
+		return "ไม้เท้า"
+	case "cups":
+		return "ถ้วย"
+	case "swords":
+		return "ดาบ"
+	case "pentacles":
+		return "เหรียญ"
+	default:
+		return *suit
+	}
+}
+
 func (s *Service) GetReading(ctx context.Context, id string) (ReadingResponse, error) {
 	return s.repo.GetReading(ctx, id)
 }
 
-func BuildSummary(cards []ReadingCard) string {
+func BuildSummary(language string, cards []ReadingCard) string {
+	fallback := "This reading is a quiet prompt for self-reflection."
+	prefix := "Reflect on this pattern: "
+
+	if language == "th" {
+		fallback = "คำทำนายนี้เป็นข้อความเตือนใจให้คุณได้ใช้เวลาทบทวนตัวเองอย่างสงบ"
+		prefix = "ภาพรวมคำทำนายของคุณ: "
+	}
+
 	if len(cards) == 0 {
-		return "This reading is a quiet prompt for self-reflection."
+		return fallback
 	}
 
 	parts := make([]string, 0, len(cards))
@@ -226,9 +292,9 @@ func BuildSummary(cards []ReadingCard) string {
 		}
 	}
 	if len(parts) == 0 {
-		return "This reading is a quiet prompt for self-reflection."
+		return fallback
 	}
-	return "Reflect on this pattern: " + strings.Join(parts, " ")
+	return prefix + strings.Join(parts, " ")
 }
 
 func randomBool() (bool, error) {

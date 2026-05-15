@@ -87,6 +87,12 @@ export type TarotReading = {
     card: {
       sourceCode: string;
       name: string;
+      nameEn: string;
+      nameTh: string;
+      type: "major" | "minor";
+      suit: string | null;
+      characteristic: string;
+      description: string;
       assets: TarotAsset[];
     };
     orientation: "upright" | "reversed";
